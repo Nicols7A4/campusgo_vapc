@@ -10,7 +10,7 @@ class ReservaService:
         if not isinstance(viajes, list) or len(viajes) not in (1, 2):
             return None, "Debe seleccionar uno o dos viajes", 400
 
-        ids = [v.get("id") for v in viajes]
+        ids = [v.get("viaje_id") for v in viajes]
 
         if None in ids or len(ids) != len(set(ids)):
             return None, "Los viajes son inválidos o están repetidos", 400
@@ -38,7 +38,7 @@ class ReservaService:
                     return None, "Datos de tramo inválidos", 400
 
                 viaje = repository.obtener_viaje_para_actualizar(
-                    item["id"]
+                    item["viaje_id"]
                 )
 
                 if viaje is None:

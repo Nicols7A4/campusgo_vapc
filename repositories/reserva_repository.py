@@ -9,7 +9,7 @@ class ReservaRepository:
             sql = "SELECT id FROM pasajero WHERE usuario_id = %s"
             cursor.execute(sql, (usuario_id,))
             fila = cursor.fetchone()
-            return fila["id" if fila else None]
+            return fila["id"] if fila else None
         finally:
             cursor.close()
 
@@ -49,7 +49,7 @@ class ReservaRepository:
     def crear_detalle(self, reserva_id, viaje_id, cantidad, tipo_tramo, orden):
         cursor = self.connection.cursor()
         try:
-            sql = """"
+            sql = """
                 INSERT INTO reserva_viaje (
                     reserva_id, viaje_id, cantidad, tipo_tramo, orden_tramo, estado
                 )
