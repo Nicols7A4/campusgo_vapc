@@ -121,3 +121,42 @@ class ReservaService:
             raise
         finally:
             connection.close()
+
+
+    # 
+
+    def eliminar(reserva_id):
+        connection = get_connection()
+
+        try:
+            connection.begin()
+            repository = ReservaRepository(connection)
+
+            reserva = repository.obtener_reserva_para_eliminar(reserva_id)
+
+            if reserva is None:
+                connection.rollback()
+                return None, "La reserva no existe", 404
+
+            if reserva["estado"] != "CONFIRMADA":
+                connection.rollback()
+                return None, "La reserva no puede ser eliminada", 409
+
+            for detalle in reserva["detalles"]:
+                repository.aumentar_cupos(
+                    detalle["viaje_id"],
+                    detalle["cantidad"]
+                )
+
+            repository.eliminar_detalles(reserva_id)
+            repository.eliminar_reserva(reserva_id)
+
+            connection.commit()
+
+            return None, "Reserva eliminada correctamente", 200
+
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()

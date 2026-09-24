@@ -76,3 +76,38 @@ class ReservaRepository:
             cursor.execute(sql, (cantidad, cantidad, viaje_id))
         finally:
             cursor.close()
+
+
+
+
+    def obtener_reserva_para_eliminar(self, reserva_id):
+            cursor = self.connection.cursor()
+    
+            try:
+                sql = """
+                    SELECT
+                        r.id, r.estado,
+                        JSON_AGG(
+                            JSON_BUILD_OBJECT(
+                                'viaje_id', rv.viaje_id,
+                                'cantidad', rv.cantidad
+                            )
+                        ) AS detalles
+                    FROM reserva r
+                    LEFT JOIN reserva_viaje rv ON r.id = rv.reserva_id
+                    WHERE r.id = %s
+                    GROUP BY r.id
+                """ 
+                cursor.execute(sql, (reserva_id,))
+                return cursor.fetchone()
+            finally:
+                cursor.close()
+
+    def elimianr_reserva(self, reserva_id):
+        cursor = self.connection.cursor()
+        try:
+            sql = "DELETE FROM reserva WHERE id = %s"
+            cursor.execute(sql, (reserva_id,))
+            # ....
+        finally:
+            cursor.close()
