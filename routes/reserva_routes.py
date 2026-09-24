@@ -33,6 +33,7 @@ def crear_reserva():
 
     return success_response(data, message, code)
 
+@reserva_bp.route('/api/reservas/<int:reserva_id>', methods=['DELETE'])
 @reserva_bp.route('/api/reserva/<int:reserva_id>', methods=['DELETE'])
 @jwt_required()
 def eliminar_reserva(reserva_id):
@@ -45,11 +46,9 @@ def eliminar_reserva(reserva_id):
             403
         )
 
-    datos = request.get_json(silent=True) or {}
-
-    data, message, code = ReservaService().crear(
+    data, message, code = ReservaService().eliminar(
         get_jwt_identity(),
-        datos
+        reserva_id
     )
 
     if data is None:

@@ -80,34 +80,70 @@ class ReservaRepository:
 
 
 
-    def obtener_reserva_para_eliminar(self, reserva_id):
-            cursor = self.connection.cursor()
-    
-            try:
-                sql = """
-                    SELECT
-                        r.id, r.estado,
-                        JSON_AGG(
-                            JSON_BUILD_OBJECT(
-                                'viaje_id', rv.viaje_id,
-                                'cantidad', rv.cantidad
-                            )
-                        ) AS detalles
-                    FROM reserva r
-                    LEFT JOIN reserva_viaje rv ON r.id = rv.reserva_id
-                    WHERE r.id = %s
-                    GROUP BY r.id
-                """ 
-                cursor.execute(sql, (reserva_id,))
-                return cursor.fetchone()
-            finally:
-                cursor.close()
+    def obtener_reserva_para_cancelar(self, reserva_id):
+        cursor = self.connection.cursor()
 
-    def elimianr_reserva(self, reserva_id):
+        try:
+            sql = """
+                SELECT r.id, r.estado, p.usuario_id AS pasajero_usuario_id
+                FROM reserva r
+                INNER JOIN pasajero p ON p.id = r.pasajero_id
+                WHERE r.id = %s
+                FOR UPDATE
+            """
+            cursor.execute(sql, (reserva_id,))
+            return cursor.fetchone()
+        finally:
+            cursor.close()
+
+    def obtener_detalles_para_cancelar(self, reserva_id):
+        cursor = self.connection.cursor()
+
+        try:
+            sql = """
+                SELECT viaje_id, cantidad
+                FROM reserva_viaje
+                WHERE reserva_id = %s
+                FOR UPDATE
+            """
+            cursor.execute(sql, (reserva_id,))
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    def marcar_reserva_cancelada(self, reserva_id):
         cursor = self.connection.cursor()
         try:
-            sql = "DELETE FROM reserva WHERE id = %s"
+            sql = "UPDATE reserva SET estado = 'CANCELADA' WHERE id = %s"
             cursor.execute(sql, (reserva_id,))
-            # ....
+        finally:
+            cursor.close()
+
+    def marcar_detalles_cancelados(self, reserva_id):
+        cursor = self.connection.cursor()
+        try:
+            sql = """
+                UPDATE reserva_viaje
+                SET estado = 'CANCELADA'
+                WHERE reserva_id = %s
+            """
+            cursor.execute(sql, (reserva_id,))
+        finally:
+            cursor.close()
+
+    def aumentar_cupos(self, viaje_id, cantidad):
+        cursor = self.connection.cursor()
+        try:
+            sql = """
+                UPDATE viaje
+                SET
+                    cupos = cupos + %s,
+                    estado = CASE
+                        WHEN estado = 'COMPLETO' THEN 'DISPONIBLE'
+                        ELSE estado
+                    END
+                WHERE id = %s
+            """
+            cursor.execute(sql, (cantidad, viaje_id))
         finally:
             cursor.close()
