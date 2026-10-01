@@ -24,7 +24,7 @@ def crear_viaje():
 
 
 @viaje_bp.route("/api/viajes", methods=["GET"])
-@jwt_required()
+#@jwt_required()
 def listar_viajes():
     filtros = {
     "origen": request.args.get("origen"),
