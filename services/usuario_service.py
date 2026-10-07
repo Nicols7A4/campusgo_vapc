@@ -25,9 +25,9 @@ class UsuarioService:
                 "rol": usuario["rol"],
                 "estado": usuario["estado"],
                 "fecha_registro": (
-                    usuario["fecha_registro"].isoformat()
-                    if usuario["fecha_registro"] is not None
-                    else None
+                usuario["fecha_registro"].isoformat()
+                if usuario["fecha_registro"] is not None
+                else None
                 )
             }
 
