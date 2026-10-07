@@ -1,10 +1,10 @@
 class ReservaRepository:
+    
     def __init__(self, connection):
         self.connection = connection
 
     def obtener_pasajero_id_por_usuario(self, usuario_id):
         cursor = self.connection.cursor()
-
         try:
             sql = "SELECT id FROM pasajero WHERE usuario_id = %s"
             cursor.execute(sql, (usuario_id,))
@@ -13,10 +13,8 @@ class ReservaRepository:
         finally:
             cursor.close()
 
-
     def obtener_viaje_para_actualizar(self, viaje_id):
         cursor = self.connection.cursor()
-
         try:
             sql = """
                 SELECT
@@ -26,18 +24,17 @@ class ReservaRepository:
                 INNER JOIN conductor c ON c.id = v.conductor_id
                 WHERE v.id = %s
                 FOR UPDATE
-            """ 
+            """
             cursor.execute(sql, (viaje_id,))
             return cursor.fetchone()
         finally:
             cursor.close()
 
-
     def crear_reserva(self, pasajero_id):
         cursor = self.connection.cursor()
         try:
             sql = """
-                INSERT INTO reserva (pasajero_id, estado) 
+                INSERT INTO reserva (pasajero_id, estado)
                 VALUES (%s, 'CONFIRMADA')
             """
             cursor.execute(sql, (pasajero_id,))
@@ -45,105 +42,39 @@ class ReservaRepository:
         finally:
             cursor.close()
 
-
     def crear_detalle(self, reserva_id, viaje_id, cantidad, tipo_tramo, orden):
         cursor = self.connection.cursor()
         try:
             sql = """
                 INSERT INTO reserva_viaje (
-                    reserva_id, viaje_id, cantidad, tipo_tramo, orden_tramo, estado
+                    reserva_id, viaje_id, cantidad,
+                    tipo_tramo, orden_tramo, estado
                 )
                 VALUES (%s, %s, %s, %s, %s, 'CONFIRMADA')
             """
-            cursor.execute(sql, (reserva_id, viaje_id, cantidad, tipo_tramo, orden))
+            cursor.execute(sql, (
+                reserva_id, viaje_id, cantidad,
+                tipo_tramo, orden
+            ))
         finally:
             cursor.close()
-
-
+            
     def descontar_cupos(self, viaje_id, cantidad):
         cursor = self.connection.cursor()
         try:
             sql = """
                 UPDATE viaje
-                SET
-                    cupos = cupos - %s,
-                    estado = CASE 
+                SET cupos = cupos - %s,
+                    estado = CASE
                         WHEN cupos - %s = 0 THEN 'COMPLETO'
                         ELSE estado
                     END
                 WHERE id = %s
             """
-            cursor.execute(sql, (cantidad, cantidad, viaje_id))
-        finally:
-            cursor.close()
-
-
-
-
-    def obtener_reserva_para_cancelar(self, reserva_id):
-        cursor = self.connection.cursor()
-
-        try:
-            sql = """
-                SELECT r.id, r.estado, p.usuario_id AS pasajero_usuario_id
-                FROM reserva r
-                INNER JOIN pasajero p ON p.id = r.pasajero_id
-                WHERE r.id = %s
-                FOR UPDATE
-            """
-            cursor.execute(sql, (reserva_id,))
-            return cursor.fetchone()
-        finally:
-            cursor.close()
-
-    def obtener_detalles_para_cancelar(self, reserva_id):
-        cursor = self.connection.cursor()
-
-        try:
-            sql = """
-                SELECT viaje_id, cantidad
-                FROM reserva_viaje
-                WHERE reserva_id = %s
-                FOR UPDATE
-            """
-            cursor.execute(sql, (reserva_id,))
-            return cursor.fetchall()
-        finally:
-            cursor.close()
-
-    def marcar_reserva_cancelada(self, reserva_id):
-        cursor = self.connection.cursor()
-        try:
-            sql = "UPDATE reserva SET estado = 'CANCELADA' WHERE id = %s"
-            cursor.execute(sql, (reserva_id,))
-        finally:
-            cursor.close()
-
-    def marcar_detalles_cancelados(self, reserva_id):
-        cursor = self.connection.cursor()
-        try:
-            sql = """
-                UPDATE reserva_viaje
-                SET estado = 'CANCELADA'
-                WHERE reserva_id = %s
-            """
-            cursor.execute(sql, (reserva_id,))
-        finally:
-            cursor.close()
-
-    def aumentar_cupos(self, viaje_id, cantidad):
-        cursor = self.connection.cursor()
-        try:
-            sql = """
-                UPDATE viaje
-                SET
-                    cupos = cupos + %s,
-                    estado = CASE
-                        WHEN estado = 'COMPLETO' THEN 'DISPONIBLE'
-                        ELSE estado
-                    END
-                WHERE id = %s
-            """
-            cursor.execute(sql, (cantidad, viaje_id))
+            cursor.execute(sql, (
+                cantidad,
+                cantidad,
+                viaje_id
+            ))
         finally:
             cursor.close()

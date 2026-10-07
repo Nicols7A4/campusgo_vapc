@@ -10,52 +10,59 @@ viaje_bp = Blueprint("viajes", __name__)
 @jwt_required()
 def crear_viaje():
     claims = get_jwt()
+
     if claims.get("rol") != "CONDUCTOR":
         return error_response("Se requiere rol CONDUCTOR", 403)
-    datos = request.get_json()
+
+    datos = request.get_json(silent=True) or {}
     service = ViajeService()
     data, message, code = service.crear(
         get_jwt_identity(),
         datos
     )
+
     if data is None:
         return error_response(message, code)
-    return success_response(data, message, code)
 
+    return success_response(data, message, code)
 
 @viaje_bp.route("/api/viajes", methods=["GET"])
 #@jwt_required()
 def listar_viajes():
     filtros = {
-    "origen": request.args.get("origen"),
-    "destino": request.args.get("destino"),
-    "fecha": request.args.get("fecha"),
-    "estado": request.args.get("estado")
+        "origen": request.args.get("origen"),
+        "destino": request.args.get("destino"),
+        "fecha": request.args.get("fecha"),
+        "estado": request.args.get("estado")
     }
+
     data, message, code = ViajeService().listar(filtros)
     return success_response(data, message, code)
-
 
 @viaje_bp.route("/api/viajes/<int:viaje_id>", methods=["GET"])
 @jwt_required()
 def obtener_viaje(viaje_id):
     data, message, code = ViajeService().obtener(viaje_id)
+
     if data is None:
         return error_response(message, code)
-    return success_response(data, message, code)
 
+    return success_response(data, message, code)
 
 @viaje_bp.route("/api/viajes/<int:viaje_id>", methods=["PUT"])
 @jwt_required()
 def actualizar_viaje(viaje_id):
     datos = request.get_json(silent=True) or {}
+
     data, message, code = ViajeService().actualizar(
         get_jwt_identity(),
         viaje_id,
         datos
     )
+
     if data is None:
         return error_response(message, code)
+
     return success_response(data, message, code)
 
 @viaje_bp.route("/api/viajes/<int:viaje_id>", methods=["DELETE"])
@@ -65,6 +72,8 @@ def cancelar_viaje(viaje_id):
         get_jwt_identity(),
         viaje_id
     )
+
     if data is None:
         return error_response(message, code)
+
     return success_response(data, message, code)
